@@ -1,0 +1,44 @@
+package com.dementiatracker.controller;
+
+import com.dementiatracker.model.Alert;
+import com.dementiatracker.service.AlertService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/alerts")
+@CrossOrigin
+public class AlertController {
+
+    @Autowired
+    private AlertService alertService;
+
+    @GetMapping("/patient/{patientId}")
+    @PreAuthorize("hasAnyRole('PATIENT', 'CARETAKER')")
+    public ResponseEntity<List<Alert>> getPatientAlerts(@PathVariable String patientId) {
+        List<Alert> alerts = alertService.getPatientAlerts(patientId);
+        return ResponseEntity.ok(alerts);
+    }
+
+    @GetMapping("/patient/{patientId}/unacknowledged")
+    @PreAuthorize("hasAnyRole('PATIENT', 'CARETAKER')")
+    public ResponseEntity<List<Alert>> getUnacknowledgedAlerts(@PathVariable String patientId) {
+        List<Alert> alerts = alertService.getUnacknowledgedAlerts(patientId);
+        return ResponseEntity.ok(alerts);
+    }
+
+    @PutMapping("/{alertId}/acknowledge")
+    @PreAuthorize("hasRole('CARETAKER')")
+    public ResponseEntity<?> acknowledgeAlert(@PathVariable String alertId, @RequestParam String caretakerId) {
+        try {
+            Alert alert = alertService.acknowledgeAlert(alertId, caretakerId);
+            return ResponseEntity.ok(alert);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+}
