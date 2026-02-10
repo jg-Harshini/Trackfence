@@ -13,35 +13,51 @@ import {
     Grid,
     Chip
 } from '@mui/material';
-import { Logout, LocationOn, ContentCopy } from '@mui/icons-material';
+import { Logout, LocationOn, ContentCopy, Warning } from '@mui/icons-material';
 import { locationService } from '../services/locationService';
+import { alertService } from '../services/alertService';
 import websocketService from '../services/websocketService';
+import MapView from './MapView';
 
 const PatientDashboard = () => {
     const { user, logout } = useAuth();
     const [currentLocation, setCurrentLocation] = useState(null);
     const [locationHistory, setLocationHistory] = useState([]);
     const [copied, setCopied] = useState(false);
+    const [mapCenter, setMapCenter] = useState({ lat: 37.7749, lng: -122.4194 });
+    const [watchId, setWatchId] = useState(null);
 
     useEffect(() => {
         loadCurrentLocation();
-        loadLocationHistory();
 
         // Connect to WebSocket
         websocketService.connect(() => {
             websocketService.subscribeToLocation(user.patientId, (location) => {
                 setCurrentLocation(location);
+                if (location) {
+                    setMapCenter({ lat: location.latitude, lng: location.longitude });
+                }
             });
         });
 
-        // Request geolocation permission and update location
+        // Use watchPosition for real-time tracking
+        let id = null;
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((position) => {
-                updateLocation(position.coords.latitude, position.coords.longitude);
-            });
+            id = navigator.geolocation.watchPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    updateLocation(latitude, longitude);
+                },
+                (error) => console.error('Error watching position:', error),
+                { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
+            );
+            setWatchId(id);
         }
 
         return () => {
+            if (id !== null) {
+                navigator.geolocation.clearWatch(id);
+            }
             websocketService.disconnect();
         };
     }, [user.patientId]);
@@ -72,6 +88,18 @@ const PatientDashboard = () => {
         }
     };
 
+    const handleEmergency = async () => {
+        if (window.confirm('Are you sure you want to trigger an EMERGENCY alert? This will notify your caretakers immediately.')) {
+            try {
+                await alertService.triggerEmergencyAlert(user.patientId);
+                alert('Emergency alert sent!');
+            } catch (error) {
+                console.error('Error sending emergency alert:', error);
+                alert('Failed to send emergency alert. Please try again or call emergency services.');
+            }
+        }
+    };
+
     const copyPatientId = () => {
         navigator.clipboard.writeText(user.patientId);
         setCopied(true);
@@ -85,6 +113,15 @@ const PatientDashboard = () => {
                     <Typography variant="h6" sx={{ flexGrow: 1 }}>
                         Patient Dashboard
                     </Typography>
+                    <Button
+                        variant="contained"
+                        color="error"
+                        onClick={handleEmergency}
+                        sx={{ mr: 2 }}
+                        startIcon={<Warning />}
+                    >
+                        Emergency
+                    </Button>
                     <Button color="inherit" onClick={logout} startIcon={<Logout />}>
                         Logout
                     </Button>
@@ -161,24 +198,16 @@ const PatientDashboard = () => {
                         <Card>
                             <CardContent>
                                 <Typography variant="h6" gutterBottom>
-                                    Recent Location History
+                                    Your Real-Time Location
                                 </Typography>
-                                {locationHistory.length > 0 ? (
-                                    <Box>
-                                        {locationHistory.map((loc, index) => (
-                                            <Box key={loc.id} sx={{ mb: 1, p: 1, bgcolor: '#f5f5f5', borderRadius: 1 }}>
-                                                <Typography variant="body2">
-                                                    {new Date(loc.timestamp).toLocaleString()} -
-                                                    Lat: {loc.latitude.toFixed(6)}, Lng: {loc.longitude.toFixed(6)}
-                                                </Typography>
-                                            </Box>
-                                        ))}
-                                    </Box>
-                                ) : (
-                                    <Typography variant="body2" color="text.secondary">
-                                        No location history available
-                                    </Typography>
-                                )}
+                                <MapView
+                                    patients={[{ id: user.patientId, location: currentLocation }]}
+                                    center={mapCenter}
+                                    showSafeZones={false}
+                                />
+                                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                                    This map shows your current location being shared with your caretakers.
+                                </Typography>
                             </CardContent>
                         </Card>
                     </Grid>

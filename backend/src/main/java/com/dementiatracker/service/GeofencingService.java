@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class GeofencingService {
@@ -68,7 +69,17 @@ public class GeofencingService {
 
         return activeSafeZones.stream()
                 .filter(zone -> !isWithinSafeZone(location, zone))
-                .toList();
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get all active safe zones for a patient
+     * 
+     * @param patientId Patient ID
+     * @return List of active safe zones
+     */
+    public List<SafeZone> getActiveSafeZones(String patientId) {
+        return safeZoneRepository.findByPatientIdAndActiveTrue(patientId);
     }
 
     /**

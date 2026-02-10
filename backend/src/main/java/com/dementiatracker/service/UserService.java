@@ -47,7 +47,7 @@ public class UserService {
      * Link caretaker to patient using shareable patient ID
      */
     public void linkCaretakerToPatient(String caretakerId, String shareablePatientId) {
-        User patient = userRepository.findById(shareablePatientId)
+        User patient = userRepository.findByPatientId(shareablePatientId)
                 .orElseThrow(() -> new RuntimeException("Patient not found"));
 
         User caretaker = userRepository.findById(caretakerId)

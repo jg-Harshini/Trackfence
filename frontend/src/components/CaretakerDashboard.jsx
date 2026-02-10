@@ -41,6 +41,7 @@ const CaretakerDashboard = () => {
     const [openZoneDialog, setOpenZoneDialog] = useState(false);
     const [openLinkDialog, setOpenLinkDialog] = useState(false);
     const [openAlertsDialog, setOpenAlertsDialog] = useState(false);
+    const [locationHistory, setLocationHistory] = useState([]);
     const [newZone, setNewZone] = useState({
         name: '',
         centerLatitude: 0,
@@ -67,10 +68,13 @@ const CaretakerDashboard = () => {
     useEffect(() => {
         if (selectedPatient) {
             loadPatientData(selectedPatient);
+            loadLocationHistory(selectedPatient);
 
             // Subscribe to location updates
             websocketService.subscribeToLocation(selectedPatient, (location) => {
                 updatePatientLocation(selectedPatient, location);
+                // Optionally center map on every update if needed, but centering on selection is usually enough
+                // setMapCenter({ lat: location.latitude, lng: location.longitude });
             });
 
             // Subscribe to alerts
@@ -121,6 +125,15 @@ const CaretakerDashboard = () => {
             }
         } catch (error) {
             console.error('Error loading patient data:', error);
+        }
+    };
+
+    const loadLocationHistory = async (patientId) => {
+        try {
+            const history = await locationService.getLocationHistory(patientId);
+            setLocationHistory(history.slice(0, 10)); // Show last 10
+        } catch (error) {
+            console.error('Error loading location history:', error);
         }
     };
 
@@ -259,6 +272,29 @@ const CaretakerDashboard = () => {
                                 </Button>
                             </CardContent>
                         </Card>
+
+                        <Card sx={{ mt: 2 }}>
+                            <CardContent>
+                                <Typography variant="h6" gutterBottom>
+                                    Location History
+                                </Typography>
+                                <List dense sx={{ maxHeight: '300px', overflow: 'auto' }}>
+                                    {locationHistory.map((loc) => (
+                                        <ListItem key={loc.id}>
+                                            <ListItemText
+                                                primary={new Date(loc.timestamp).toLocaleString()}
+                                                secondary={`Lat: ${loc.latitude.toFixed(6)}, Lng: ${loc.longitude.toFixed(6)}`}
+                                            />
+                                        </ListItem>
+                                    ))}
+                                    {locationHistory.length === 0 && (
+                                        <Typography variant="body2" color="text.secondary">
+                                            No history available
+                                        </Typography>
+                                    )}
+                                </List>
+                            </CardContent>
+                        </Card>
                     </Grid>
 
                     <Grid item xs={12} md={9}>
@@ -306,8 +342,8 @@ const CaretakerDashboard = () => {
                         label="Radius (meters)"
                         type="number"
                         margin="normal"
-                        value={newZone.radiusInMeters}
-                        onChange={(e) => setNewZone({ ...newZone, radiusInMeters: parseInt(e.target.value) })}
+                        value={newZone.radiusInMeters || ''}
+                        onChange={(e) => setNewZone({ ...newZone, radiusInMeters: parseInt(e.target.value) || 0 })}
                     />
                     <Typography variant="caption" color="text.secondary">
                         Center: {newZone.centerLatitude.toFixed(6)}, {newZone.centerLongitude.toFixed(6)}
@@ -369,7 +405,7 @@ const CaretakerDashboard = () => {
                     <Button onClick={() => setOpenAlertsDialog(false)}>Close</Button>
                 </DialogActions>
             </Dialog>
-        </Box>
+        </Box >
     );
 };
 

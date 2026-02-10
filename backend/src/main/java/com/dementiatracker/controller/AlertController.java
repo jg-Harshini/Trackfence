@@ -41,4 +41,11 @@ public class AlertController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @PostMapping("/emergency/{patientId}")
+    @PreAuthorize("hasRole('PATIENT')")
+    public ResponseEntity<Alert> triggerEmergencyAlert(@PathVariable String patientId) {
+        Alert alert = alertService.createEmergencyAlert(patientId);
+        return ResponseEntity.ok(alert);
+    }
 }

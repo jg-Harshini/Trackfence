@@ -57,10 +57,14 @@ public class LocationService {
      * Check if patient has violated any safe zones
      */
     private void checkGeofencing(String patientId, Location location) {
-        List<SafeZone> violatedZones = geofencingService.getViolatedSafeZones(patientId, location);
+        boolean inAnyZone = geofencingService.isInAnySafeZone(patientId, location);
+        List<SafeZone> activeZones = geofencingService.getActiveSafeZones(patientId); // I need to add this method or
+                                                                                      // just use repository
 
-        // Create alerts for each violated zone
-        for (SafeZone zone : violatedZones) {
+        if (!activeZones.isEmpty() && !inAnyZone) {
+            // Patient is outside of all their safe zones
+            // For now, we take the first zone as a reference for the alert
+            SafeZone zone = activeZones.get(0);
             alertService.createZoneExitAlert(patientId, zone, location);
         }
     }

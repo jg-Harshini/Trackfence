@@ -16,5 +16,10 @@ export const alertService = {
             params: { caretakerId }
         });
         return response.data;
+    },
+
+    async triggerEmergencyAlert(patientId) {
+        const response = await api.post(`/alerts/emergency/${patientId}`);
+        return response.data;
     }
 };

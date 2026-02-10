@@ -39,6 +39,7 @@ public class Alert {
     public enum AlertType {
         ZONE_EXIT, // Patient exited safe zone
         ZONE_ENTRY, // Patient re-entered safe zone
+        EMERGENCY, // Patient triggered emergency alert
         LOW_BATTERY, // Device battery low (future feature)
         NO_MOVEMENT // No movement detected (future feature)
     }

@@ -65,6 +65,25 @@ public class AlertService {
     }
 
     /**
+     * Create emergency alert triggered by patient
+     */
+    public Alert createEmergencyAlert(String patientId) {
+        Alert alert = new Alert();
+        alert.setPatientId(patientId);
+        alert.setType(Alert.AlertType.EMERGENCY);
+        alert.setMessage("EMERGENCY: Patient has triggered an emergency alert!");
+        alert.setTriggeredAt(LocalDateTime.now());
+        alert.setAcknowledged(false);
+
+        Alert savedAlert = alertRepository.save(alert);
+
+        // Send real-time notification via WebSocket
+        messagingTemplate.convertAndSend("/topic/alerts/" + patientId, savedAlert);
+
+        return savedAlert;
+    }
+
+    /**
      * Get all alerts for a patient
      */
     public List<Alert> getPatientAlerts(String patientId) {

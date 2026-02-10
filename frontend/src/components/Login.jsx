@@ -97,6 +97,7 @@ const Login = () => {
                                 value={loginData.username}
                                 onChange={(e) => setLoginData({ ...loginData, username: e.target.value })}
                                 required
+                                autoComplete="username"
                             />
                             <TextField
                                 fullWidth
@@ -106,6 +107,7 @@ const Login = () => {
                                 value={loginData.password}
                                 onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                                 required
+                                autoComplete="current-password"
                             />
                             <Button
                                 fullWidth
@@ -126,6 +128,7 @@ const Login = () => {
                                 value={registerData.username}
                                 onChange={(e) => setRegisterData({ ...registerData, username: e.target.value })}
                                 required
+                                autoComplete="username"
                             />
                             <TextField
                                 fullWidth
@@ -135,6 +138,7 @@ const Login = () => {
                                 value={registerData.email}
                                 onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
                                 required
+                                autoComplete="email"
                             />
                             <TextField
                                 fullWidth
@@ -143,6 +147,7 @@ const Login = () => {
                                 value={registerData.fullName}
                                 onChange={(e) => setRegisterData({ ...registerData, fullName: e.target.value })}
                                 required
+                                autoComplete="name"
                             />
                             <TextField
                                 fullWidth
@@ -150,6 +155,7 @@ const Login = () => {
                                 margin="normal"
                                 value={registerData.phoneNumber}
                                 onChange={(e) => setRegisterData({ ...registerData, phoneNumber: e.target.value })}
+                                autoComplete="tel"
                             />
                             <TextField
                                 fullWidth
@@ -159,6 +165,7 @@ const Login = () => {
                                 value={registerData.password}
                                 onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
                                 required
+                                autoComplete="new-password"
                             />
                             <TextField
                                 fullWidth

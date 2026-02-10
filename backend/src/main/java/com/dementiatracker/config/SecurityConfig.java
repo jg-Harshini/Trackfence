@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -26,7 +26,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     @Autowired
@@ -58,20 +58,28 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/ws/**").permitAll()
-                        .requestMatchers("/api/patients/**").hasAnyRole("PATIENT", "CARETAKER")
-                        .requestMatchers("/api/locations/**").hasAnyRole("PATIENT", "CARETAKER")
-                        .requestMatchers("/api/safezones/**").hasRole("CARETAKER")
-                        .requestMatchers("/api/alerts/**").hasAnyRole("PATIENT", "CARETAKER")
-                        .anyRequest().authenticated())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+        http.cors().configurationSource(corsConfigurationSource());
+        http.csrf().disable();
+        http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+
+        http.authorizeRequests()
+                .antMatchers("/api/auth/**").permitAll()
+                .antMatchers("/ws/**").permitAll()
+                .antMatchers("/api/users/link").hasRole("CARETAKER")
+                .antMatchers("/api/alerts/*/acknowledge").hasRole("CARETAKER")
+                .antMatchers("/api/patients/**").hasAnyRole("PATIENT", "CARETAKER")
+                .antMatchers("/api/locations/**").hasAnyRole("PATIENT", "CARETAKER")
+                .antMatchers("/api/safezones/**").hasRole("CARETAKER")
+                .antMatchers("/api/alerts/**").hasAnyRole("PATIENT", "CARETAKER")
+                .anyRequest().authenticated();
+
+        http.headers()
+                .frameOptions().sameOrigin()
+                .contentSecurityPolicy(
+                        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; connect-src 'self' ws: wss:; img-src 'self' data: https: http:; font-src 'self' https://fonts.gstatic.com;");
+
+        http.authenticationProvider(authenticationProvider());
+        http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
