@@ -3,6 +3,7 @@ package com.dementiatracker.service;
 import com.dementiatracker.model.Location;
 import com.dementiatracker.model.SafeZone;
 import com.dementiatracker.repository.LocationRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Service
+@Slf4j
 public class LocationService {
 
     @Autowired
@@ -34,6 +36,7 @@ public class LocationService {
      * Update patient location and check geofencing
      */
     public Location updateLocation(String patientId, double latitude, double longitude, String source) {
+        log.info("Updating location for patient {}: ({}, {}) from {}", patientId, latitude, longitude, source);
         // Save new location
         Location location = new Location();
         location.setPatientId(patientId);

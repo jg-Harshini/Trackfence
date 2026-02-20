@@ -26,6 +26,7 @@ const PatientDashboard = () => {
     const [copied, setCopied] = useState(false);
     const [mapCenter, setMapCenter] = useState({ lat: 37.7749, lng: -122.4194 });
     const [watchId, setWatchId] = useState(null);
+    const [geoError, setGeoError] = useState(null);
 
     useEffect(() => {
         loadCurrentLocation();
@@ -47,11 +48,29 @@ const PatientDashboard = () => {
                 (position) => {
                     const { latitude, longitude } = position.coords;
                     updateLocation(latitude, longitude);
+                    setGeoError(null);
                 },
-                (error) => console.error('Error watching position:', error),
+                (error) => {
+                    console.error('Error watching position:', error);
+                    let errorMsg = 'Unknown error';
+                    switch (error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMsg = "Location permission denied. Please enable location access.";
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMsg = "Location information is unavailable.";
+                            break;
+                        case error.TIMEOUT:
+                            errorMsg = "Request to get user location timed out.";
+                            break;
+                    }
+                    setGeoError(errorMsg);
+                },
                 { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
             );
             setWatchId(id);
+        } else {
+            setGeoError("Geolocation is not supported by this browser or requires HTTPS.");
         }
 
         return () => {
@@ -173,6 +192,13 @@ const PatientDashboard = () => {
                                 <Typography variant="h6" gutterBottom>
                                     <LocationOn /> Current Location
                                 </Typography>
+                                {geoError && (
+                                    <Box sx={{ mb: 2, p: 1, bgcolor: '#fff4f4', borderLeft: '4px solid #d32f2f' }}>
+                                        <Typography variant="body2" color="error">
+                                            <strong>Tracking Error:</strong> {geoError}
+                                        </Typography>
+                                    </Box>
+                                )}
                                 {currentLocation ? (
                                     <Box>
                                         <Typography variant="body2">

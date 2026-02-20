@@ -8,7 +8,8 @@ class WebSocketService {
     }
 
     connect(onConnected) {
-        const socket = new SockJS('http://localhost:8080/ws');
+        const backendUrl = import.meta.env.VITE_API_URL || 'http://192.168.0.12:8080';
+        const socket = new SockJS(`${backendUrl}/ws`);
 
         this.client = new Client({
             webSocketFactory: () => socket,
