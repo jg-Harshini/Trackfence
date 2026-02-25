@@ -2,7 +2,7 @@ services:
   # Frontend (React Vite)
   - type: web
     name: dementia-tracker-frontend
-    runtime: node
+    env : node
     plan: free
     rootDirectory: frontend
     buildCommand: npm install && npm run build
