@@ -16,13 +16,14 @@ services:
       - key: CORS_ALLOWED_ORIGINS
         value: "*"
 
-  # Frontend (React Vite)
-  - type: static
+  # Frontend (React Vite - static site)
+  - type: web
     name: dementia-tracker-frontend
+    env: static
     region: singapore
     rootDirectory: frontend
     buildCommand: npm install && npm run build
-    publishPath: dist
+    staticPublishPath: dist
     envVars:
       - key: VITE_API_URL
         fromService:
