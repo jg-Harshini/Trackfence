@@ -5,7 +5,7 @@ services:
     env: docker
     region: singapore
     plan: free
-    rootDirectory: backend
+    dockerfilePath: backend/Dockerfile
     envVars:
       - key: SPRING_DATA_MONGODB_URI
         sync: false
@@ -21,9 +21,8 @@ services:
     name: dementia-tracker-frontend
     env: static
     region: singapore
-    rootDirectory: frontend
-    buildCommand: npm install && npm run build
-    staticPublishPath: dist
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
     envVars:
       - key: VITE_API_URL
         sync: false
