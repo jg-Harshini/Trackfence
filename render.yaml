@@ -17,16 +17,16 @@ services:
       - key: CORS_ALLOWED_ORIGINS
         fromService:
           name: dementia-tracker-frontend
-          type: static_site
+          type: web # Changed to web for compatibility
           property: url
 
   # Frontend Service (React Vite)
-  - type: static_site
+  - type: web # Using web + env: static for broader compatibility
     name: dementia-tracker-frontend
     env: static
     rootDirectory: frontend
     buildCommand: npm run build
-    publishPath: dist
+    staticPublishPath: dist # Using the correct key for static sites
     routes:
       - type: rewrite
         source: /.*
