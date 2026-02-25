@@ -70,19 +70,35 @@ const CaretakerDashboard = () => {
             loadPatientData(selectedPatient);
             loadLocationHistory(selectedPatient);
 
-            // Subscribe to location updates
-            websocketService.subscribeToLocation(selectedPatient, (location) => {
+            // Subscribe to location updates only for selected patient
+            const locationSub = websocketService.subscribeToLocation(selectedPatient, (location) => {
                 updatePatientLocation(selectedPatient, location);
-                // Optionally center map on every update if needed, but centering on selection is usually enough
-                // setMapCenter({ lat: location.latitude, lng: location.longitude });
             });
 
-            // Subscribe to alerts
-            websocketService.subscribeToAlerts(selectedPatient, (alert) => {
-                setAlerts(prev => [alert, ...prev]);
-            });
+            return () => {
+                if (locationSub) locationSub.unsubscribe();
+            };
         }
     }, [selectedPatient]);
+
+    // Separate effect for alerts to cover ALL patients
+    useEffect(() => {
+        if (patients.length > 0) {
+            const subs = patients.map(patient => {
+                return websocketService.subscribeToAlerts(patient.id, (alert) => {
+                    setAlerts(prev => {
+                        // Avoid duplicates if alert is already in list
+                        if (prev.some(a => a.id === alert.id)) return prev;
+                        return [alert, ...prev];
+                    });
+                });
+            });
+
+            return () => {
+                subs.forEach(sub => sub && sub.unsubscribe());
+            };
+        }
+    }, [patients]);
 
     const loadUserData = async () => {
         try {

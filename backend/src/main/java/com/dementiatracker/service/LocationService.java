@@ -1,5 +1,6 @@
 package com.dementiatracker.service;
 
+import com.dementiatracker.model.Alert;
 import com.dementiatracker.model.Location;
 import com.dementiatracker.model.SafeZone;
 import com.dementiatracker.repository.LocationRepository;
@@ -61,14 +62,33 @@ public class LocationService {
      */
     private void checkGeofencing(String patientId, Location location) {
         boolean inAnyZone = geofencingService.isInAnySafeZone(patientId, location);
-        List<SafeZone> activeZones = geofencingService.getActiveSafeZones(patientId); // I need to add this method or
-                                                                                      // just use repository
+        List<SafeZone> activeZones = geofencingService.getActiveSafeZones(patientId);
 
-        if (!activeZones.isEmpty() && !inAnyZone) {
-            // Patient is outside of all their safe zones
-            // For now, we take the first zone as a reference for the alert
-            SafeZone zone = activeZones.get(0);
-            alertService.createZoneExitAlert(patientId, zone, location);
+        if (!activeZones.isEmpty()) {
+            if (!inAnyZone) {
+                // Patient is outside of all their safe zones
+                // Check if we already have an unacknowledged exit alert
+                List<Alert> existingAlerts = alertService.getUnacknowledgedAlerts(patientId);
+                boolean alreadyAlerted = existingAlerts.stream()
+                        .anyMatch(a -> a.getType() == Alert.AlertType.ZONE_EXIT);
+
+                if (!alreadyAlerted) {
+                    // For now, we take the first zone as a reference for the alert
+                    SafeZone zone = activeZones.get(0);
+                    alertService.createZoneExitAlert(patientId, zone, location);
+                }
+            } else {
+                // Patient is inside at least one zone
+                // If they were previously outside, we could send a "back in zone" alert
+                // and acknowledge previous exit alerts
+                List<Alert> unacknowledgedExitAlerts = alertService.getUnacknowledgedAlerts(patientId).stream()
+                        .filter(a -> a.getType() == Alert.AlertType.ZONE_EXIT)
+                        .collect(java.util.stream.Collectors.toList());
+
+                for (Alert alert : unacknowledgedExitAlerts) {
+                    alertService.acknowledgeAlert(alert.getId(), "SYSTEM_REENTRY");
+                }
+            }
         }
     }
 
