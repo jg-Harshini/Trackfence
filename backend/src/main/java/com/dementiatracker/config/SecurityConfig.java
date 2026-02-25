@@ -65,6 +65,7 @@ public class SecurityConfig {
         http.authorizeRequests()
                 .antMatchers("/api/auth/**").permitAll()
                 .antMatchers("/ws/**").permitAll()
+                .antMatchers("/error").permitAll()
                 .antMatchers("/api/users/link").hasRole("CARETAKER")
                 .antMatchers("/api/alerts/*/acknowledge").hasRole("CARETAKER")
                 .antMatchers("/api/patients/**").hasAnyRole("PATIENT", "CARETAKER")
